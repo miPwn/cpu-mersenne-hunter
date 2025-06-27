@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <cstring>
+#include <cstdlib>
 
 // Static member initialization
 gmp_randstate_t BigInteger::random_state;
@@ -305,7 +306,7 @@ void BigInteger::cleanup_random_state() {
 void BigInteger::initialize_memory_pool() {
     memory_pool.reserve(POOL_SIZE);
     for (size_t i = 0; i < POOL_SIZE; ++i) {
-        mpz_t* ptr = new mpz_t;
+        mpz_t* ptr = (mpz_t*)malloc(sizeof(mpz_t));
         mpz_init(*ptr);
         memory_pool.push_back(ptr);
     }
@@ -314,7 +315,7 @@ void BigInteger::initialize_memory_pool() {
 void BigInteger::cleanup_memory_pool() {
     for (auto ptr : memory_pool) {
         mpz_clear(*ptr);
-        delete ptr;
+        free(ptr);
     }
     memory_pool.clear();
     pool_index = 0;
@@ -330,7 +331,7 @@ mpz_t* BigInteger::allocate_from_pool() {
     }
     
     // Pool exhausted, allocate new
-    mpz_t* ptr = new mpz_t;
+    mpz_t* ptr = (mpz_t*)malloc(sizeof(mpz_t));
     mpz_init(*ptr);
     return ptr;
 }
@@ -341,7 +342,7 @@ void BigInteger::return_to_pool(mpz_t* ptr) {
         memory_pool[--pool_index] = ptr;
     } else {
         mpz_clear(*ptr);
-        delete ptr;
+        free(ptr);
     }
 }
 
