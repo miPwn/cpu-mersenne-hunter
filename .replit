@@ -2,7 +2,7 @@ modules = ["cpp", "nodejs-20"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["gcc", "gmp", "fftw", "pkg-config", "gcc13", "cmake", "binutils", "gdb", "valgrind"]
+packages = ["gcc", "gmp", "fftw", "pkg-config", "gcc13", "cmake", "binutils", "gdb", "valgrind", "python3"]
 
 [workflows]
 runButton = "Project"
@@ -26,7 +26,7 @@ args = "C++ Build and Deploy"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "C++ Mersenne Calculator"
+args = "C++ Production Deploy"
 
 [[workflows.workflow]]
 name = "Build and Run Mersenne Prime Calculator"
@@ -53,12 +53,12 @@ task = "shell.exec"
 args = "./deploy-cpp.sh"
 
 [[workflows.workflow]]
-name = "C++ Mersenne Calculator"
+name = "C++ Production Deploy"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "./run-mersenne.sh"
+args = "./deploy-and-run.sh"
 waitForPort = 5000
 
 [[ports]]
