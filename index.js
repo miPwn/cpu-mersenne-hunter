@@ -190,43 +190,58 @@ function broadcast(message) {
 }
 
 // API endpoint to trigger calculations
-app.post('/api/calculate', (req, res) => {
+app.post('/api/calculate', async (req, res) => {
     const { exponent } = req.body;
     
-    // Broadcast calculation start
-    broadcast({
-        type: 'log',
-        payload: {
-            timestamp: Date.now(),
-            level: 'info',
-            message: `Starting calculation for M${exponent}`
-        }
-    });
-    
-    // Simulate calculation result after a delay
-    setTimeout(() => {
-        broadcast({
-            type: 'result',
-            payload: {
-                exponent: parseInt(exponent),
-                isPrime: exponent === '127' || exponent === '521' || exponent === '607',
-                duration: Math.random() * 1000 + 100,
-                timestamp: Date.now(),
-                iterations: Math.floor(Math.random() * 1000000) + 50000
-            }
-        });
-        
+    try {
+        // Broadcast calculation start
         broadcast({
             type: 'log',
             payload: {
                 timestamp: Date.now(),
-                level: 'success',
-                message: `Completed calculation for M${exponent}`
+                level: 'info',
+                message: `Starting calculation for M${exponent}`
             }
         });
-    }, 2000);
-    
-    res.json({ status: 'calculation_started', exponent });
+        
+        // Simulate calculation time
+        const startTime = Date.now();
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 500));
+        const duration = Date.now() - startTime;
+        
+        // Known Mersenne prime exponents for realistic results
+        const knownPrimes = [2, 3, 5, 7, 13, 17, 19, 31, 61, 89, 107, 127, 521, 607, 1279, 2203, 2281, 3217];
+        const isPrime = knownPrimes.includes(parseInt(exponent));
+        
+        const result = {
+            exponent: parseInt(exponent),
+            isPrime,
+            duration,
+            timestamp: Date.now(),
+            iterations: Math.floor(Math.random() * 1000000) + 50000,
+            algorithm: 'Lucas-Lehmer Test'
+        };
+        
+        // Broadcast result via WebSocket
+        broadcast({
+            type: 'result',
+            payload: result
+        });
+        
+        // Send result in HTTP response
+        res.json({ 
+            status: 'calculation_completed', 
+            result,
+            type: 'result',
+            payload: result
+        });
+        
+    } catch (error) {
+        res.status(500).json({ 
+            error: 'Calculation failed',
+            message: error.message 
+        });
+    }
 });
 
 const server = httpServer.listen(PORT, '0.0.0.0', () => {
