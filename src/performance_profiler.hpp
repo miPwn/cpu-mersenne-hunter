@@ -8,7 +8,9 @@
 #include <memory>
 #include <mutex>
 #include <fstream>
+#include <iostream>
 #include <thread>
+#include <atomic>
 
 class PerformanceProfiler {
 public:

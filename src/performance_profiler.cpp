@@ -177,7 +177,7 @@ void PerformanceProfiler::update_peak_memory() {
     memory_stats.peak_memory_usage = std::max(memory_stats.peak_memory_usage, current);
 }
 
-size_t PerformanceProfiler::get_current_memory_usage() {
+size_t PerformanceProfiler::get_current_memory_usage() const {
 #ifdef __linux__
     std::ifstream status("/proc/self/status");
     std::string line;

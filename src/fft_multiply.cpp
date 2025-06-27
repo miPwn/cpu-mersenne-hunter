@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <cassert>
+#include <omp.h>
 
 // Static member initialization
 std::vector<std::unique_ptr<FFTMultiplier::FFTWPlanCache>> FFTMultiplier::plan_cache;
@@ -257,20 +258,34 @@ void FFTMultiplier::cleanup_all_plans() {
     fftw_cleanup();
 }
 
+// Static helper function for modular exponentiation
+static uint64_t static_mod_pow(uint64_t base, uint64_t exp, uint64_t mod) {
+    uint64_t result = 1;
+    base %= mod;
+    while (exp > 0) {
+        if (exp & 1) {
+            result = (result * base) % mod;
+        }
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return result;
+}
+
 // NTTMultiplier implementation
 NTTMultiplier::NTTContext::NTTContext(size_t size) : max_size(size) {
     omega_powers.resize(size);
     inv_omega_powers.resize(size);
     
-    uint64_t omega = mod_pow(NTT_ROOT, (NTT_MOD - 1) / size, NTT_MOD);
-    uint64_t inv_omega = mod_pow(omega, NTT_MOD - 2, NTT_MOD);
+    uint64_t omega = static_mod_pow(NTTMultiplier::NTT_ROOT, (NTTMultiplier::NTT_MOD - 1) / size, NTTMultiplier::NTT_MOD);
+    uint64_t inv_omega = static_mod_pow(omega, NTTMultiplier::NTT_MOD - 2, NTTMultiplier::NTT_MOD);
     
     omega_powers[0] = 1;
     inv_omega_powers[0] = 1;
     
     for (size_t i = 1; i < size; ++i) {
-        omega_powers[i] = (omega_powers[i-1] * omega) % NTT_MOD;
-        inv_omega_powers[i] = (inv_omega_powers[i-1] * inv_omega) % NTT_MOD;
+        omega_powers[i] = (omega_powers[i-1] * omega) % NTTMultiplier::NTT_MOD;
+        inv_omega_powers[i] = (inv_omega_powers[i-1] * inv_omega) % NTTMultiplier::NTT_MOD;
     }
 }
 
