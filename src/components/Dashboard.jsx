@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react'
 import { Clock, CheckCircle, XCircle, Cpu, Filter, Search } from 'lucide-react'
+import CalculatorControls from './CalculatorControls'
 
-function Dashboard({ results }) {
+function Dashboard({ results, onNewResult }) {
   const [filter, setFilter] = useState('')
   const [sortBy, setSortBy] = useState('timestamp')
   const [sortOrder, setSortOrder] = useState('desc')
@@ -68,6 +69,9 @@ function Dashboard({ results }) {
 
   return (
     <div className="space-y-6">
+      {/* Calculator Controls */}
+      <CalculatorControls onCalculate={onNewResult} />
+      
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg shadow p-6">

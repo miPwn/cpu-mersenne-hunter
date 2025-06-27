@@ -97,7 +97,12 @@ function App() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'dashboard' && <Dashboard results={results} />}
+        {activeTab === 'dashboard' && (
+          <Dashboard 
+            results={results} 
+            onNewResult={(result) => setResults(prev => [result, ...prev].slice(0, 1000))}
+          />
+        )}
         {activeTab === 'logs' && <LogViewer logs={logs} />}
         {activeTab === 'charts' && <Charts results={results} />}
       </main>
