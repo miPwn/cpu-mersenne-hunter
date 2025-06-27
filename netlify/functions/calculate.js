@@ -53,7 +53,9 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({ 
         status: 'calculation_completed', 
-        result 
+        result,
+        type: 'result',
+        payload: result
       })
     };
 
