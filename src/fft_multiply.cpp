@@ -15,8 +15,10 @@ FFTMultiplier::FFTWPlanCache::FFTWPlanCache(size_t n) : size(n) {
     input = fftw_alloc_complex(n);
     output = fftw_alloc_complex(n);
     
-    forward_plan = fftw_plan_dft_1d(n, input, output, FFTW_FORWARD, FFTW_ESTIMATE);
-    inverse_plan = fftw_plan_dft_1d(n, output, input, FFTW_BACKWARD, FFTW_ESTIMATE);
+    // Use FFTW_MEASURE for better performance optimization
+    // FFTW will run multiple algorithms and choose the fastest
+    forward_plan = fftw_plan_dft_1d(n, input, output, FFTW_FORWARD, FFTW_MEASURE);
+    inverse_plan = fftw_plan_dft_1d(n, output, input, FFTW_BACKWARD, FFTW_MEASURE);
 }
 
 FFTMultiplier::FFTWPlanCache::~FFTWPlanCache() {
