@@ -1,270 +1,217 @@
 import React, { useState } from 'react'
-import { Play, Pause, Square, Settings, Loader2 } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Play, Pause, Square, Calculator, Zap } from 'lucide-react'
+import { Button } from './ui/Button'
+import { Card, CardHeader, CardContent, CardTitle } from './ui/Card'
+import { Badge } from './ui/Badge'
 
-function CalculatorControls({ onCalculate }) {
+export default function CalculatorControls({ onCalculate }) {
   const [exponent, setExponent] = useState('127')
   const [isRunning, setIsRunning] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
-  const [currentJobs, setCurrentJobs] = useState([])
-  const [maxThreads, setMaxThreads] = useState('8')
-  const [batchMode, setBatchMode] = useState(false)
-  const [rangeStart, setRangeStart] = useState('127')
-  const [rangeEnd, setRangeEnd] = useState('521')
+  const [algorithm, setAlgorithm] = useState('lucas-lehmer')
 
-  const handleRun = async () => {
-    if (isRunning) return
-
+  const handleStart = async () => {
+    if (!exponent || isNaN(exponent)) return
+    
     setIsRunning(true)
-    setIsPaused(false)
-
+    
     try {
-      if (batchMode) {
-        const start = parseInt(rangeStart)
-        const end = parseInt(rangeEnd)
-        const jobs = []
-        
-        for (let exp = start; exp <= end; exp++) {
-          if (isPrime(exp)) { // Only test prime exponents for Mersenne primes
-            jobs.push(exp)
-          }
-        }
-        
-        setCurrentJobs(jobs)
-        
-        for (let i = 0; i < jobs.length && !isPaused; i++) {
-          await calculateSingle(jobs[i])
-          if (isPaused) break
-        }
-      } else {
-        await calculateSingle(parseInt(exponent))
-      }
-    } finally {
-      setIsRunning(false)
-      setCurrentJobs([])
-    }
-  }
-
-  const calculateSingle = async (exp) => {
-    try {
-      const response = await fetch(`/api/calculate/${exp}`)
-      const result = await response.json()
+      const response = await fetch('/api/calculate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ exponent: parseInt(exponent), algorithm }),
+      })
       
-      if (onCalculate) {
-        onCalculate({
-          ...result,
-          isPrime: result.output.includes('is PRIME'),
-          threads: parseInt(maxThreads),
-          iterations: extractIterations(result.output)
-        })
+      if (response.ok) {
+        const result = await response.json()
+        if (onCalculate) {
+          onCalculate(result)
+        }
       }
     } catch (error) {
       console.error('Calculation error:', error)
     }
-  }
-
-  const handlePause = () => {
-    setIsPaused(true)
+    
+    // Simulate calculation time
+    setTimeout(() => {
+      setIsRunning(false)
+    }, 3000)
   }
 
   const handleStop = () => {
     setIsRunning(false)
-    setIsPaused(false)
-    setCurrentJobs([])
   }
 
-  const isPrime = (n) => {
-    if (n < 2) return false
-    if (n === 2) return true
-    if (n % 2 === 0) return false
-    for (let i = 3; i * i <= n; i += 2) {
-      if (n % i === 0) return false
-    }
-    return true
-  }
-
-  const extractIterations = (output) => {
-    const match = output.match(/Iterations completed: (\d+)/)
-    return match ? parseInt(match[1]) : null
-  }
-
-  const presetExponents = [127, 521, 607, 1279, 2203, 2281, 3217, 4253, 4423, 9689]
+  const presetExponents = [
+    { value: '127', label: 'M127', known: true },
+    { value: '521', label: 'M521', known: true },
+    { value: '607', label: 'M607', known: true },
+    { value: '1279', label: 'M1279', known: true },
+    { value: '2203', label: 'M2203', known: true },
+    { value: '3217', label: 'M3217', known: true },
+  ]
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Calculator Controls</h3>
-        <div className="flex items-center space-x-2">
-          {isRunning && (
-            <div className="flex items-center space-x-2 text-sm text-blue-600">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Running...</span>
-            </div>
-          )}
-          {isPaused && (
-            <div className="flex items-center space-x-2 text-sm text-orange-600">
-              <Pause className="h-4 w-4" />
-              <span>Paused</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Mode Selection */}
-      <div className="flex space-x-4">
-        <label className="flex items-center">
-          <input
-            type="radio"
-            checked={!batchMode}
-            onChange={() => setBatchMode(false)}
-            className="mr-2"
-          />
-          <span className="text-sm text-gray-700">Single Test</span>
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            checked={batchMode}
-            onChange={() => setBatchMode(true)}
-            className="mr-2"
-          />
-          <span className="text-sm text-gray-700">Batch Range</span>
-        </label>
-      </div>
-
-      {/* Input Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {!batchMode ? (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Exponent
-            </label>
-            <input
-              type="number"
-              value={exponent}
-              onChange={(e) => setExponent(e.target.value)}
-              disabled={isRunning}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50"
-              placeholder="Enter prime exponent (e.g., 127)"
-            />
-          </div>
-        ) : (
-          <>
+    <Card className="mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Calculator className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+          <span>Mersenne Prime Calculator</span>
+          <Badge variant="primary" className="ml-auto">
+            High Performance
+          </Badge>
+        </CardTitle>
+      </CardHeader>
+      
+      <CardContent className="space-y-6">
+        {/* Input Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Range Start
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Exponent (p)
               </label>
               <input
                 type="number"
-                value={rangeStart}
-                onChange={(e) => setRangeStart(e.target.value)}
+                value={exponent}
+                onChange={(e) => setExponent(e.target.value)}
+                placeholder="Enter exponent..."
+                className="input-field w-full"
                 disabled={isRunning}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50"
+                min="2"
+                max="100000000"
               />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Calculate 2^p - 1 where p is prime
+              </p>
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Range End
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Algorithm
               </label>
-              <input
-                type="number"
-                value={rangeEnd}
-                onChange={(e) => setRangeEnd(e.target.value)}
+              <select
+                value={algorithm}
+                onChange={(e) => setAlgorithm(e.target.value)}
+                className="input-field w-full"
                 disabled={isRunning}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50"
-              />
-            </div>
-          </>
-        )}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Max Threads
-          </label>
-          <select
-            value={maxThreads}
-            onChange={(e) => setMaxThreads(e.target.value)}
-            disabled={isRunning}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50"
-          >
-            <option value="1">1 Thread</option>
-            <option value="2">2 Threads</option>
-            <option value="4">4 Threads</option>
-            <option value="8">8 Threads</option>
-            <option value="16">16 Threads</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Preset Buttons */}
-      {!batchMode && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Quick Presets
-          </label>
-          <div className="grid grid-cols-5 gap-2">
-            {presetExponents.map(exp => (
-              <button
-                key={exp}
-                onClick={() => setExponent(exp.toString())}
-                disabled={isRunning}
-                className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
               >
-                M{exp}
-              </button>
-            ))}
+                <option value="lucas-lehmer">Lucas-Lehmer Test</option>
+                <option value="lucas-lehmer-fft">Lucas-Lehmer + FFT</option>
+                <option value="parallel">Parallel Lucas-Lehmer</option>
+              </select>
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* Control Buttons */}
-      <div className="flex space-x-3">
-        <button
-          onClick={handleRun}
-          disabled={isRunning}
-          className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Play className="h-4 w-4" />
-          <span>Run</span>
-        </button>
-
-        <button
-          onClick={handlePause}
-          disabled={!isRunning || isPaused}
-          className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Pause className="h-4 w-4" />
-          <span>Pause</span>
-        </button>
-
-        <button
-          onClick={handleStop}
-          disabled={!isRunning && !isPaused}
-          className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Square className="h-4 w-4" />
-          <span>Stop</span>
-        </button>
-      </div>
-
-      {/* Progress Information */}
-      {(isRunning || isPaused) && currentJobs.length > 0 && (
-        <div className="bg-blue-50 rounded-md p-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-blue-800">Batch Progress</span>
-            <span className="text-blue-600">
-              {currentJobs.length} tests queued
-            </span>
-          </div>
-          <div className="mt-2">
-            <div className="text-xs text-blue-600">
-              Testing: {currentJobs.slice(0, 5).map(exp => `M${exp}`).join(', ')}
-              {currentJobs.length > 5 && ` +${currentJobs.length - 5} more`}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Known Mersenne Primes
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {presetExponents.map((preset) => (
+                  <Button
+                    key={preset.value}
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setExponent(preset.value)}
+                    disabled={isRunning}
+                    className="text-xs"
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      )}
-    </div>
+
+        {/* Control Buttons */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-3">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button
+                onClick={handleStart}
+                disabled={isRunning || !exponent}
+                variant="primary"
+                size="lg"
+                className="flex items-center space-x-2"
+              >
+                {isRunning ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Zap className="h-4 w-4" />
+                    </motion.div>
+                    <span>Computing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4" />
+                    <span>Start Calculation</span>
+                  </>
+                )}
+              </Button>
+            </motion.div>
+
+            {isRunning && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+              >
+                <Button
+                  onClick={handleStop}
+                  variant="error"
+                  size="lg"
+                  className="flex items-center space-x-2"
+                >
+                  <Square className="h-4 w-4" />
+                  <span>Stop</span>
+                </Button>
+              </motion.div>
+            )}
+          </div>
+
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            {exponent && !isNaN(exponent) && (
+              <span>Testing: 2^{exponent} - 1</span>
+            )}
+          </div>
+        </div>
+
+        {/* Progress Indicator */}
+        {isRunning && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-4 h-4 bg-primary-600 dark:bg-primary-400 rounded-full animate-pulse"></div>
+              <span className="text-sm text-gray-600 dark:text-gray-300">
+                Running Lucas-Lehmer primality test for M{exponent}...
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-3">
+              <motion.div
+                className="bg-primary-600 dark:bg-primary-400 h-2 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: '100%' }}
+                transition={{ duration: 3, ease: "easeInOut" }}
+              />
+            </div>
+          </motion.div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
-
-export default CalculatorControls

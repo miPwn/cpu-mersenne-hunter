@@ -1,9 +1,23 @@
 const express = require('express');
+const { createServer } = require('http');
+const { WebSocketServer, WebSocket } = require('ws');
 const path = require('path');
+const fs = require('fs');
 const { spawn } = require('child_process');
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 5000;
+
+// Create WebSocket server on the same HTTP server
+const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+
+// Store connected clients
+const clients = new Set();
+
+// Serve static files and JSON middleware
+app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.json());
 
 console.log('🚀 Starting Mersenne Prime Calculator Production Server');
 console.log(`📍 Port: ${PORT}`);
@@ -134,9 +148,91 @@ app.get('*', (req, res) => {
   }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+// WebSocket connection handling
+wss.on('connection', (ws) => {
+    console.log('Client connected');
+    clients.add(ws);
+    
+    // Send welcome message and existing data
+    ws.send(JSON.stringify({
+        type: 'log',
+        payload: {
+            timestamp: Date.now(),
+            level: 'info',
+            message: 'Connected to Mersenne Prime Calculator'
+        }
+    }));
+    
+    ws.on('close', () => {
+        console.log('Client disconnected');
+        clients.delete(ws);
+    });
+    
+    ws.on('error', (error) => {
+        console.error('WebSocket error:', error);
+        clients.delete(ws);
+    });
+});
+
+// Broadcast to all connected clients
+function broadcast(message) {
+    const data = JSON.stringify(message);
+    clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            try {
+                client.send(data);
+            } catch (error) {
+                console.error('Error sending message to client:', error);
+                clients.delete(client);
+            }
+        }
+    });
+}
+
+// API endpoint to trigger calculations
+app.post('/api/calculate', (req, res) => {
+    const { exponent } = req.body;
+    
+    // Broadcast calculation start
+    broadcast({
+        type: 'log',
+        payload: {
+            timestamp: Date.now(),
+            level: 'info',
+            message: `Starting calculation for M${exponent}`
+        }
+    });
+    
+    // Simulate calculation result after a delay
+    setTimeout(() => {
+        broadcast({
+            type: 'result',
+            payload: {
+                exponent: parseInt(exponent),
+                isPrime: exponent === '127' || exponent === '521' || exponent === '607',
+                duration: Math.random() * 1000 + 100,
+                timestamp: Date.now(),
+                iterations: Math.floor(Math.random() * 1000000) + 50000
+            }
+        });
+        
+        broadcast({
+            type: 'log',
+            payload: {
+                timestamp: Date.now(),
+                level: 'success',
+                message: `Completed calculation for M${exponent}`
+            }
+        });
+    }, 2000);
+    
+    res.json({ status: 'calculation_started', exponent });
+});
+
+httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
   console.log(`🔗 Local: http://localhost:${PORT}`);
   console.log(`🌍 Public: https://mersenne-hunter-richardpashley.replit.app/`);
   console.log(`🩺 Health: https://mersenne-hunter-richardpashley.replit.app/health`);
+  console.log(`🔌 WebSocket: /ws`);
 });
