@@ -1,0 +1,75 @@
+ChatGPT said:
+Here’s a precise and technically detailed prompt you can use to direct an AI assistant (or yourself) to add a React-based UI dashboard to your high-performance Mersenne Prime application without affecting core performance:
+
+🧠 Prompt:
+I have a high-performance C++ application (MersenneHunter) that calculates Mersenne primes using multithreaded FFT-based Lucas–Lehmer tests. I want to add a modern React-based dashboard that:
+
+Displays real-time and historical performance data from test runs.
+
+Shows a log viewer with timestamps, status, and any relevant debug output.
+
+Allows filtering/sorting of results by exponent size, duration, and result.
+
+Optionally renders charts (e.g., bar or line graph of timings across exponents).
+
+Requirements:
+
+Separation of Concerns:
+
+Do not modify or slow down the core C++ computation logic.
+
+The C++ app should output results to a file (e.g., results.jsonl or log.ndjson) or over a local socket if needed.
+
+React App Features:
+
+Dashboard panel showing:
+
+Exponent tested
+
+Duration in ms
+
+Prime result (true/false)
+
+Thread count used
+
+Timestamp
+
+Log viewer panel with:
+
+Live tailing capability (tail -f style)
+
+Auto-scroll with pause/play toggle
+
+Search/filter box for exponents or keywords
+
+Responsive design (mobile/tablet/desktop)
+
+Optional charts using Recharts or Chart.js
+
+Integration Strategy:
+
+Have the C++ application write performance data to logs/results.ndjson.
+
+React app should poll or watch this file (via a small Node/Express backend or use WebSocket if desired).
+
+Ensure the React frontend is completely decoupled from the execution logic—no impact on the Mersenne core.
+
+Tech Stack Suggestions (can adjust if needed):
+
+React + Vite or CRA
+
+TailwindCSS for styling
+
+Recharts or Chart.js for performance graphs
+
+Backend proxy (Node.js/Express or Python/Flask) for log file streaming if needed
+
+Please generate:
+
+The React component structure
+
+Sample results.ndjson format
+
+A backend file watcher (Node or Python) if needed
+
+Best practices for keeping the UI performant and scalable
