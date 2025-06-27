@@ -63,74 +63,74 @@ all: directories $(TARGET)
 
 # Create necessary directories
 directories:
-        @mkdir -p $(OBJ_DIR) $(BIN_DIR)
+	@mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
 # Main executable
 $(TARGET): $(OBJECTS)
-        @echo "Linking $@..."
-        @$(CXX) $(CXX_FLAGS) $(OBJECTS) -o $@ $(LIBS)
-        @echo "Build complete: $@"
+	@echo "Linking $@..."
+	@$(CXX) $(CXX_FLAGS) $(OBJECTS) -o $@ $(LIBS)
+	@echo "Build complete: $@"
 
 # Object file compilation
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-        @echo "Compiling $<..."
-        @$(CXX) $(CXX_FLAGS) $(INCLUDE_DIRS) -c $< -o $@
+	@echo "Compiling $<..."
+	@$(CXX) $(CXX_FLAGS) $(INCLUDE_DIRS) -c $< -o $@
 
 # Clean build artifacts
 clean:
-        @echo "Cleaning build artifacts..."
-        @rm -rf $(OBJ_DIR) $(BIN_DIR)
-        @rm -f *.prof *.json *.csv gmon.out
+	@echo "Cleaning build artifacts..."
+	@rm -rf $(OBJ_DIR) $(BIN_DIR)
+	@rm -f *.prof *.json *.csv gmon.out
 
 # Install dependencies (Replit Nix environment)
 install-deps:
-        @echo "Dependencies should be installed via Replit's package manager..."
-        @echo "Required packages: gcc, gmp, fftw, pkg-config"
+	@echo "Dependencies should be installed via Replit's package manager..."
+	@echo "Required packages: gcc, gmp, fftw, pkg-config"
 
 # Quick tests
 test: $(TARGET)
-        @echo "Running quick tests..."
-        @$(TARGET) -p 127 -v
-        @$(TARGET) -p 521 -v
+	@echo "Running quick tests..."
+	@$(TARGET) -p 127 -v
+	@$(TARGET) -p 521 -v
 
 # Extended test suite
 test-extended: $(TARGET)
-        @echo "Running extended test suite..."
-        @$(TARGET) -r 2 1000 -v -o test_results.txt
+	@echo "Running extended test suite..."
+	@$(TARGET) -r 2 1000 -v -o test_results.txt
 
 # Benchmark suite
 benchmark: $(TARGET)
-        @echo "Running performance benchmarks..."
-        @$(TARGET) -b -s benchmark_profile.json
+	@echo "Running performance benchmarks..."
+	@$(TARGET) -b -s benchmark_profile.json
 
 # Optimized release build
 release:
-        @$(MAKE) clean
-        @$(MAKE) CXX_FLAGS="$(CXX_FLAGS) -DNDEBUG -s"
+	@$(MAKE) clean
+	@$(MAKE) CXX_FLAGS="$(CXX_FLAGS) -DNDEBUG -s"
 
 # Debug build
 debug:
-        @$(MAKE) DEBUG=1
+	@$(MAKE) DEBUG=1
 
 # Help information
 help:
-        @echo "Mersenne Prime Calculator - Build System"
-        @echo "========================================"
-        @echo ""
-        @echo "Available targets:"
-        @echo "  all              - Build the main executable (default)"
-        @echo "  clean            - Remove build artifacts"
-        @echo "  debug            - Build with debug information"
-        @echo "  release          - Build optimized release version"
-        @echo "  test             - Run quick functionality tests"
-        @echo "  test-extended    - Run extended test suite"
-        @echo "  benchmark        - Run performance benchmarks"
-        @echo "  help             - Show this help message"
+	@echo "Mersenne Prime Calculator - Build System"
+	@echo "========================================"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  all              - Build the main executable (default)"
+	@echo "  clean            - Remove build artifacts"
+	@echo "  debug            - Build with debug information"
+	@echo "  release          - Build optimized release version"
+	@echo "  test             - Run quick functionality tests"
+	@echo "  test-extended    - Run extended test suite"
+	@echo "  benchmark        - Run performance benchmarks"
+	@echo "  help             - Show this help message"
 
 # Dependency tracking
 -include $(OBJECTS:.o=.d)
 
 $(OBJ_DIR)/%.d: $(SRC_DIR)/%.cpp
-        @$(CXX) $(CXX_FLAGS) $(INCLUDE_DIRS) -MM -MT $(@:.d=.o) $< > $@
+	@$(CXX) $(CXX_FLAGS) $(INCLUDE_DIRS) -MM -MT $(@:.d=.o) $< > $@
 
 .PHONY: directories

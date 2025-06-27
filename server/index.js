@@ -66,11 +66,18 @@ function sendExistingData(ws) {
       
       lines.forEach(line => {
         try {
-          const result = JSON.parse(line)
-          ws.send(JSON.stringify({
-            type: 'result',
-            payload: result
-          }))
+          // Handle malformed JSON by extracting valid JSON objects
+          const cleanedLine = line.trim()
+          if (cleanedLine.startsWith('{') && cleanedLine.includes('}')) {
+            // Extract the first complete JSON object
+            const firstBraceEnd = cleanedLine.indexOf('}') + 1
+            const jsonStr = cleanedLine.substring(0, firstBraceEnd)
+            const result = JSON.parse(jsonStr)
+            ws.send(JSON.stringify({
+              type: 'result',
+              payload: result
+            }))
+          }
         } catch (error) {
           console.error('Error parsing result line:', error)
         }
