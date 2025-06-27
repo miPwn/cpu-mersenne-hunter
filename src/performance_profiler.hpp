@@ -72,7 +72,7 @@ private:
     std::vector<std::pair<std::chrono::time_point<std::chrono::high_resolution_clock>, MemoryInfo>> memory_samples;
     
     void sampling_loop();
-    size_t get_current_memory_usage();
+    size_t get_current_memory_usage() const;
     
 public:
     PerformanceProfiler();

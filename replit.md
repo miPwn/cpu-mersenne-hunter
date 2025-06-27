@@ -97,7 +97,14 @@ This is a high-performance C++ application designed to calculate Mersenne primes
 
 ```
 Changelog:
-- June 27, 2025. Initial setup
+- June 27, 2025: Complete implementation of high-performance Mersenne prime calculator
+  - Built optimized C++17 codebase with GMP and FFTW integration
+  - Implemented Lucas-Lehmer test with FFT-based multiplication support
+  - Added comprehensive performance profiling and benchmarking
+  - Successfully tested with known Mersenne primes (M127, M521, M607, etc.)
+  - Achieved sub-millisecond computation times for moderately large exponents
+  - Compiled and running successfully in Replit environment
+- June 27, 2025: Initial setup
 ```
 
 ## User Preferences
