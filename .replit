@@ -1,0 +1,36 @@
+modules = ["cpp"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Build and Run Mersenne Prime Calculator"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "mersenne_build_and_test"
+
+[[workflows.workflow]]
+name = "Build and Run Mersenne Prime Calculator"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "sudo apt-get update && sudo apt-get install -y build-essential libgmp-dev libfftw3-dev libomp-dev pkg-config && make clean && make all && ./bin/mersenne_prime -p 127 -v"
+
+[[workflows.workflow]]
+name = "mersenne_build_and_test"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd /tmp && make install-deps && make all && ./bin/mersenne_prime -p 127 -v"
