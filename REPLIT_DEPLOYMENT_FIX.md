@@ -1,124 +1,56 @@
-# 🔧 Fix "Could not find run command" Error
+# Fix for 404 Error on Public Replit URL
 
 ## The Problem
-Your .replit file is missing the essential `run` command that Replit needs for deployment. This causes the "Could not find run command" error.
+Your Mersenne Prime Calculator is running perfectly on the internal server (localhost:5000) but the public URL `https://mersenne-hunter-richardpashley.replit.app/` returns 404. This is because Replit's public routing system isn't configured to use your application as the primary service.
 
-## ✅ The Solution
+## The Solution
 
-### 1. Replace Your .replit File
-Copy the contents from `replit-config.toml` to your `.replit` file:
+### Step 1: Update Your .replit File
+You need to manually edit your `.replit` file to add the missing `run` command. Open the `.replit` file in the Replit editor and add this line at the top level (not inside any brackets):
 
 ```toml
-modules = ["cpp", "nix"]
+run = "node main.js"
+```
+
+Your `.replit` file should look like this at the beginning:
+```toml
+modules = ["cpp", "nodejs-20"]
+run = "node main.js"
 
 [nix]
 channel = "stable-24_05"
-
-# 🔑 This fixes "Could not find run command"
-run = "./deploy-and-run.sh"
-
-entrypoint = "deploy-and-run.sh"
-
-[deployment]
-deploymentTarget = "cloudrun"
-build = ["make", "clean", "&&", "make", "all"]
-run = ["./bin/mersenne_prime", "-p", "127", "-v"]
-
-[[ports]]
-localPort = 5000
-externalPort = 80
-exposeLocalhost = true
-
-[languages.cpp]
-pattern = "**/*.{cpp,hpp,c,h,cc,cxx}"
-syntax = "cpp"
-
-[env]
-CC = "gcc"
-CXX = "g++"
+packages = ["gcc", "gmp", "fftw", "pkg-config", "gcc13", "cmake", "binutils", "gdb", "valgrind", "python3"]
 ```
 
-### 2. Use the Universal Launcher Script
-The `deploy-and-run.sh` script handles all deployment scenarios:
+### Step 2: Verify the Configuration
+After adding the `run` command:
+1. Save the `.replit` file
+2. The Replit environment should automatically restart
+3. Your application should now be accessible at the public URL
 
-**Pure C++ Application:**
-- Builds the binary if needed
-- Runs comprehensive tests
-- Starts health check server on port 5000
+### Step 3: Test the Deployment
+Once configured, these URLs should work:
+- **Main App**: https://mersenne-hunter-richardpashley.replit.app/
+- **Health Check**: https://mersenne-hunter-richardpashley.replit.app/health
+- **API Example**: https://mersenne-hunter-richardpashley.replit.app/api/calculate/127
 
-**Hybrid Application (React + C++):**
-- Builds C++ backend
-- Serves React frontend from dist/
-- Provides API endpoints for C++ integration
+## Current Status
+- ✅ Your application is built and running locally
+- ✅ C++ Mersenne prime calculator is operational
+- ✅ React frontend is built and ready
+- ✅ Express server is serving both frontend and API
+- ❌ Public URL routing needs the `.replit` fix above
 
-**With Node.js Backend:**
-- Integrates with existing Express server
-- Maintains WebSocket connections
-- Serves static files
+## Alternative: Use Deploy Button
+Once you've updated the `.replit` file with the `run` command, you can also use Replit's "Deploy" button, which should now work without the "Could not find run command" error.
 
-### 3. Required Dependencies
-Ensure your environment has these packages (they're already installed):
-- gcc13 (C++ compiler)
-- gmp (arbitrary precision arithmetic)
-- fftw (Fast Fourier Transform)
-- cmake, binutils, gdb, valgrind
-
-## 🚀 Deployment Steps
-
-### Option A: Manual Fix
-1. Copy `replit-config.toml` contents to `.replit`
-2. Click "Deploy" in Replit
-3. The launcher script will handle building and running
-
-### Option B: Quick Test
-Run the deployment script directly:
+## Verification Commands
+After the fix, you can test locally:
 ```bash
-./deploy-and-run.sh
+curl http://localhost:5000/health
+curl http://localhost:5000/
 ```
 
-### Option C: Hybrid Deployment
-If you have both React and C++:
-```bash
-# Build frontend
-npm run build
+Both should return successful responses (they already do locally).
 
-# Deploy everything
-./deploy-and-run.sh
-```
-
-## 🔍 Troubleshooting
-
-### "Build failed" errors:
-```bash
-cat deployment-run.log
-```
-
-### Binary not working:
-```bash
-./bin/mersenne_prime -p 127 -v
-```
-
-### Port issues:
-The script automatically detects and runs on port 5000 (mapped to port 80 externally)
-
-### Health check:
-Visit `/health` endpoint to verify deployment status
-
-## 🎯 What This Fixes
-
-1. **"Could not find run command"** - Fixed with proper `run` directive
-2. **Silent build failures** - Complete logging to `deployment-run.log`
-3. **Binary persistence** - Proper build and execution flow
-4. **Hybrid deployments** - Automatic detection of React + C++ setup
-5. **Health monitoring** - Built-in health check endpoints
-
-## 🔄 For Your Current Project
-
-Your Mersenne Prime Calculator will:
-1. Build automatically on deployment
-2. Run performance tests (M127, M521)
-3. Start a web server with health monitoring
-4. Serve a simple web interface showing status
-5. Provide `/health` endpoint for monitoring
-
-Ready to deploy - just update your `.replit` file with the configuration from `replit-config.toml`!
+The public URL will work once the `.replit` configuration is updated.

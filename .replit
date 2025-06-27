@@ -30,7 +30,7 @@ args = "Production Start"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Full Stack Production"
+args = "Main Server"
 
 [[workflows.workflow]]
 name = "Build and Run Mersenne Prime Calculator"
@@ -66,12 +66,12 @@ args = "./production-start.sh"
 waitForPort = 5000
 
 [[workflows.workflow]]
-name = "Full Stack Production"
+name = "Main Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node start-production.js"
+args = "node main.js"
 waitForPort = 5000
 
 [[ports]]
