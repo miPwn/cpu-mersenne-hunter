@@ -2,6 +2,7 @@ modules = ["cpp"]
 
 [nix]
 channel = "stable-24_05"
+packages = ["gcc", "gmp", "fftw", "pkg-config"]
 
 [workflows]
 runButton = "Project"

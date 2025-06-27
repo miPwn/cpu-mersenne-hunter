@@ -82,26 +82,10 @@ clean:
 	@rm -rf $(OBJ_DIR) $(BIN_DIR)
 	@rm -f *.prof *.json *.csv gmon.out
 
-# Install dependencies (Ubuntu/Debian)
+# Install dependencies (Replit Nix environment)
 install-deps:
-	@echo "Installing dependencies..."
-	sudo apt-get update
-	sudo apt-get install -y \
-		build-essential \
-		libgmp-dev \
-		libfftw3-dev \
-		libomp-dev \
-		pkg-config
-
-# Install dependencies (CentOS/RHEL/Fedora)
-install-deps-rpm:
-	@echo "Installing dependencies..."
-	sudo dnf install -y \
-		gcc-c++ \
-		gmp-devel \
-		fftw3-devel \
-		libomp-devel \
-		pkgconfig
+	@echo "Dependencies should be installed via Replit's package manager..."
+	@echo "Required packages: gcc, gmp, fftw, pkg-config"
 
 # Quick tests
 test: $(TARGET)
@@ -119,28 +103,6 @@ benchmark: $(TARGET)
 	@echo "Running performance benchmarks..."
 	@$(TARGET) -b -s benchmark_profile.json
 
-# Memory usage analysis
-profile-memory: $(TARGET)
-	@echo "Running memory profiler..."
-	valgrind --tool=massif --massif-out-file=massif.out $(TARGET) -p 607 -v
-	ms_print massif.out > memory_profile.txt
-	@echo "Memory profile saved to memory_profile.txt"
-
-# CPU profiling
-profile-cpu: 
-	@$(MAKE) PROFILE=1 clean all
-	@echo "Running CPU profiler..."
-	@$(TARGET) -p 607 -v
-	gprof $(TARGET) gmon.out > cpu_profile.txt
-	@echo "CPU profile saved to cpu_profile.txt"
-
-# Performance analysis with perf (Linux)
-profile-perf: $(TARGET)
-	@echo "Running perf analysis..."
-	perf record -g $(TARGET) -p 607 -v
-	perf report > perf_profile.txt
-	@echo "Perf profile saved to perf_profile.txt"
-
 # Optimized release build
 release:
 	@$(MAKE) clean
@@ -149,33 +111,6 @@ release:
 # Debug build
 debug:
 	@$(MAKE) DEBUG=1
-
-# Static analysis
-analyze:
-	@echo "Running static analysis..."
-	cppcheck --enable=all --std=c++17 $(SRC_DIR)/
-	clang-tidy $(SRC_DIR)/*.cpp -- $(INCLUDE_DIRS) $(CXX_FLAGS)
-
-# Code formatting
-format:
-	@echo "Formatting code..."
-	find $(SRC_DIR) -name "*.cpp" -o -name "*.hpp" | xargs clang-format -i
-
-# Documentation generation
-docs:
-	@echo "Generating documentation..."
-	doxygen Doxyfile
-
-# Package for distribution
-package: release
-	@echo "Creating distribution package..."
-	@mkdir -p mersenne_prime_package
-	@cp $(TARGET) mersenne_prime_package/
-	@cp README.md mersenne_prime_package/
-	@cp Makefile mersenne_prime_package/
-	@tar -czf mersenne_prime_$(shell date +%Y%m%d).tar.gz mersenne_prime_package/
-	@rm -rf mersenne_prime_package/
-	@echo "Package created: mersenne_prime_$(shell date +%Y%m%d).tar.gz"
 
 # Help information
 help:
@@ -190,25 +125,7 @@ help:
 	@echo "  test             - Run quick functionality tests"
 	@echo "  test-extended    - Run extended test suite"
 	@echo "  benchmark        - Run performance benchmarks"
-	@echo "  profile-memory   - Analyze memory usage with valgrind"
-	@echo "  profile-cpu      - Analyze CPU usage with gprof"
-	@echo "  profile-perf     - Analyze performance with perf (Linux)"
-	@echo "  analyze          - Run static code analysis"
-	@echo "  format           - Format source code"
-	@echo "  install-deps     - Install dependencies (Ubuntu/Debian)"
-	@echo "  install-deps-rpm - Install dependencies (CentOS/RHEL/Fedora)"
-	@echo "  package          - Create distribution package"
 	@echo "  help             - Show this help message"
-	@echo ""
-	@echo "Build options:"
-	@echo "  DEBUG=1          - Enable debug build"
-	@echo "  PROFILE=1        - Enable profiling build"
-	@echo ""
-	@echo "Examples:"
-	@echo "  make             - Standard optimized build"
-	@echo "  make debug       - Debug build with symbols"
-	@echo "  make test        - Build and run tests"
-	@echo "  make benchmark   - Build and run benchmarks"
 
 # Dependency tracking
 -include $(OBJECTS:.o=.d)
