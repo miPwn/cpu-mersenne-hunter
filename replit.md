@@ -93,6 +93,18 @@ This is a high-performance C++ application designed to calculate Mersenne primes
 - **Algorithm Thresholds**: Automatic selection between multiplication strategies
 - **Memory Management**: Pool-based allocation for reduced overhead
 
+## Deployment Status
+
+### Current Issue
+Public URL `https://mersenne-hunter-richardpashley.replit.app/` returns 404 despite:
+- ✅ Local server running perfectly on port 5000
+- ✅ `run = "node index.js"` added to `.replit` file  
+- ✅ C++ binary compiled and operational
+- ✅ React frontend built and ready
+
+### Resolution Required
+Replit environment needs complete restart to recognize `.replit` configuration changes.
+
 ## Changelog
 
 ```
@@ -116,6 +128,7 @@ Changelog:
   - Successfully tested with known Mersenne primes (M127, M521, M607, etc.)
   - Achieved sub-millisecond computation times for moderately large exponents
   - Compiled and running successfully in Replit environment
+- June 27, 2025: Deployment troubleshooting - application running locally but public URL needs Replit restart
 - June 27, 2025: Initial setup
 ```
 

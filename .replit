@@ -1,4 +1,5 @@
 modules = ["cpp", "nodejs-20"]
+run = "node main.js"
 
 [nix]
 channel = "stable-24_05"
@@ -30,7 +31,7 @@ args = "Production Start"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Main Server"
+args = "Production Deploy"
 
 [[workflows.workflow]]
 name = "Build and Run Mersenne Prime Calculator"
@@ -66,12 +67,12 @@ args = "./production-start.sh"
 waitForPort = 5000
 
 [[workflows.workflow]]
-name = "Main Server"
+name = "Production Deploy"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node main.js"
+args = "node index.js"
 waitForPort = 5000
 
 [[ports]]
