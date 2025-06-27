@@ -12,10 +12,25 @@ private:
     static gmp_randstate_t random_state;
     static bool random_state_initialized;
     
-    // Memory pool for frequent allocations
-    static constexpr size_t POOL_SIZE = 1024;
-    static std::vector<mpz_t*> memory_pool;
-    static size_t pool_index;
+    // Thread-local memory pool for better cache locality and reduced contention
+    static constexpr size_t POOL_SIZE = 256;  // Smaller per-thread pools
+    struct ThreadLocalPool {
+        std::vector<mpz_t*> memory_pool;
+        size_t pool_index = 0;
+        
+        ThreadLocalPool() {
+            memory_pool.reserve(POOL_SIZE);
+        }
+        
+        ~ThreadLocalPool() {
+            for (auto ptr : memory_pool) {
+                mpz_clear(*ptr);
+                free(ptr);
+            }
+        }
+    };
+    
+    static thread_local ThreadLocalPool tl_pool;
     
 public:
     // Constructors

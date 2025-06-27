@@ -7,8 +7,7 @@
 // Static member initialization
 gmp_randstate_t BigInteger::random_state;
 bool BigInteger::random_state_initialized = false;
-std::vector<mpz_t*> BigInteger::memory_pool;
-size_t BigInteger::pool_index = 0;
+thread_local BigInteger::ThreadLocalPool BigInteger::tl_pool;
 
 BigInteger::BigInteger() {
     mpz_init(value);
@@ -302,32 +301,29 @@ void BigInteger::cleanup_random_state() {
     }
 }
 
-// Memory pool management
+// Thread-local memory pool management
 void BigInteger::initialize_memory_pool() {
-    memory_pool.reserve(POOL_SIZE);
+    // Initialize thread-local pool
+    tl_pool.memory_pool.reserve(POOL_SIZE);
     for (size_t i = 0; i < POOL_SIZE; ++i) {
         mpz_t* ptr = (mpz_t*)malloc(sizeof(mpz_t));
         mpz_init(*ptr);
-        memory_pool.push_back(ptr);
+        tl_pool.memory_pool.push_back(ptr);
     }
 }
 
 void BigInteger::cleanup_memory_pool() {
-    for (auto ptr : memory_pool) {
-        mpz_clear(*ptr);
-        free(ptr);
-    }
-    memory_pool.clear();
-    pool_index = 0;
+    // Thread-local pool cleanup happens automatically in destructor
+    // This function is kept for compatibility but does nothing
 }
 
 mpz_t* BigInteger::allocate_from_pool() {
-    if (memory_pool.empty()) {
+    if (tl_pool.memory_pool.empty()) {
         initialize_memory_pool();
     }
     
-    if (pool_index < memory_pool.size()) {
-        return memory_pool[pool_index++];
+    if (tl_pool.pool_index < tl_pool.memory_pool.size()) {
+        return tl_pool.memory_pool[tl_pool.pool_index++];
     }
     
     // Pool exhausted, allocate new
@@ -337,9 +333,9 @@ mpz_t* BigInteger::allocate_from_pool() {
 }
 
 void BigInteger::return_to_pool(mpz_t* ptr) {
-    if (pool_index > 0) {
+    if (tl_pool.pool_index > 0) {
         mpz_set_ui(*ptr, 0);  // Reset value
-        memory_pool[--pool_index] = ptr;
+        tl_pool.memory_pool[--tl_pool.pool_index] = ptr;
     } else {
         mpz_clear(*ptr);
         free(ptr);
