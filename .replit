@@ -28,6 +28,10 @@ args = "C++ Build and Deploy"
 task = "workflow.run"
 args = "C++ Production Deploy"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Production Start"
+
 [[workflows.workflow]]
 name = "Build and Run Mersenne Prime Calculator"
 author = "agent"
@@ -59,6 +63,15 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "./deploy-and-run.sh"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Production Start"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./production-start.sh"
 waitForPort = 5000
 
 [[ports]]
