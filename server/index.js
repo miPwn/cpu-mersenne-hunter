@@ -1,13 +1,9 @@
-import express from 'express'
-import { createServer } from 'http'
-import { WebSocketServer } from 'ws'
-import chokidar from 'chokidar'
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+const express = require('express')
+const { createServer } = require('http')
+const { WebSocketServer } = require('ws')
+const chokidar = require('chokidar')
+const fs = require('fs')
+const path = require('path')
 
 const app = express()
 const server = createServer(app)
