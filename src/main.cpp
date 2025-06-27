@@ -1,5 +1,6 @@
 #include "mersenne_prime.hpp"
 #include "performance_profiler.hpp"
+#include "json_logger.hpp"
 #include <iostream>
 #include <vector>
 #include <string>

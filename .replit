@@ -20,6 +20,14 @@ args = "Build and Run Mersenne Prime Calculator"
 task = "workflow.run"
 args = "mersenne_build_and_test"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Dashboard Backend"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Dashboard Frontend"
+
 [[workflows.workflow]]
 name = "Build and Run Mersenne Prime Calculator"
 author = "agent"
@@ -35,3 +43,21 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd /tmp && make install-deps && make all && ./bin/mersenne_prime -p 127 -v"
+
+[[workflows.workflow]]
+name = "Dashboard Backend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node server/index.js"
+waitForPort = 3001
+
+[[workflows.workflow]]
+name = "Dashboard Frontend"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run client"
+waitForPort = 5000
