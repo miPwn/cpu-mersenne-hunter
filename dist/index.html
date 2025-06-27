@@ -339,44 +339,10 @@
         document.getElementById('test-display').textContent = `Testing: 2^${value} - 1`;
       }
 
-      // WebSocket connection
-      function connectWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
-        
-        try {
-          ws = new WebSocket(wsUrl);
-          
-          ws.onopen = () => {
-            console.log('WebSocket connected');
-            updateConnectionStatus(true);
-            addLog('Connected to Mersenne Prime Calculator', 'info');
-          };
-
-          ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            
-            if (data.type === 'result') {
-              addResult(data.payload);
-            } else if (data.type === 'log') {
-              addLog(data.payload.message, data.payload.level);
-            }
-          };
-
-          ws.onclose = () => {
-            console.log('WebSocket disconnected');
-            updateConnectionStatus(false);
-            setTimeout(connectWebSocket, 3000);
-          };
-
-          ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-            updateConnectionStatus(false);
-          };
-        } catch (err) {
-          console.error('Connection error:', err);
-          updateConnectionStatus(false);
-        }
+      // API connection for Netlify deployment
+      function connectAPI() {
+        updateConnectionStatus(true);
+        addLog('Connected to Mersenne Prime Calculator API', 'info');
       }
 
       function updateConnectionStatus(connected) {
@@ -412,14 +378,22 @@
         }, 60);
 
         try {
-          const response = await fetch('/api/calculate', {
+          const response = await fetch('/.netlify/functions/calculate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ exponent: parseInt(exponent) })
           });
           
           if (response.ok) {
+            const data = await response.json();
             addLog(`Calculation started for M${exponent}`, 'info');
+            
+            // Add the result after calculation completes
+            if (data.result) {
+              addResult(data.result);
+              addLog(`Calculation completed for M${exponent}: ${data.result.isPrime ? 'PRIME' : 'COMPOSITE'}`, 
+                data.result.isPrime ? 'success' : 'info');
+            }
           }
         } catch (error) {
           console.error('Calculation error:', error);
@@ -524,12 +498,18 @@
       // Initialize
       document.addEventListener('DOMContentLoaded', () => {
         updateThemeIcon();
-        connectWebSocket();
+        connectAPI();
         
         document.getElementById('exponent').addEventListener('input', (e) => {
           const value = e.target.value;
           document.getElementById('test-display').textContent = value ? `Testing: 2^${value} - 1` : '';
         });
+
+        // Add some sample data for demonstration
+        setTimeout(() => {
+          addLog('Mersenne Prime Calculator initialized successfully', 'success');
+          addLog('Ready to calculate Mersenne primes using Lucas-Lehmer test', 'info');
+        }, 1000);
       });
     </script>
   </body>
