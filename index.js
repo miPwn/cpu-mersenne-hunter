@@ -229,10 +229,25 @@ app.post('/api/calculate', (req, res) => {
     res.json({ status: 'calculation_started', exponent });
 });
 
-httpServer.listen(PORT, '0.0.0.0', () => {
+const server = httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on http://0.0.0.0:${PORT}`);
   console.log(`🔗 Local: http://localhost:${PORT}`);
   console.log(`🌍 Public: https://mersenne-hunter-richardpashley.replit.app/`);
   console.log(`🩺 Health: https://mersenne-hunter-richardpashley.replit.app/health`);
   console.log(`🔌 WebSocket: /ws`);
+});
+
+// Handle server shutdown gracefully
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('Process terminated');
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  server.close(() => {
+    console.log('Process terminated');
+  });
 });
