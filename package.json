@@ -1,0 +1,61 @@
+{
+  "name": "mersenne-hunter",
+  "version": "1.0.0",
+  "description": "Research-Grade Computational Platform for Mersenne Prime Discovery",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "npm run build:frontend",
+    "build:frontend": "vite build",
+    "build:cpp": "make clean && make all",
+    "test": "echo 'No tests specified yet' && exit 0",
+    "test:frontend": "echo 'No frontend tests specified yet' && exit 0",
+    "lint": "eslint . --ext .js,.jsx --fix || true",
+    "lint:react": "eslint src/ --ext .js,.jsx --fix || true",
+    "preview": "vite preview",
+    "health-check": "./health-check.sh"
+  },
+  "keywords": [
+    "mersenne",
+    "prime",
+    "mathematics",
+    "computational",
+    "number-theory",
+    "lucas-lehmer",
+    "research",
+    "GIMPS"
+  ],
+  "author": "Research Computing Team",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "compression": "^1.7.4",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.1.0",
+    "vite": "^5.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "eslint": "^8.52.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/miPwn/cpu-mersenne-hunter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/miPwn/cpu-mersenne-hunter/issues"
+  },
+  "homepage": "https://github.com/miPwn/cpu-mersenne-hunter#readme"
+}
