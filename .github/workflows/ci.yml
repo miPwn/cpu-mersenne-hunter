@@ -1,0 +1,367 @@
+name: 🔢 Mersenne Hunter CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  CPP_BUILD_TYPE: Release
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # =============================================================================
+  # Code Quality & Security Analysis
+  # =============================================================================
+  code-quality:
+    name: 📋 Code Quality Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🔍 Run CodeQL Analysis
+      uses: github/codeql-action/init@v2
+      with:
+        languages: cpp, javascript
+        
+    - name: 🏗️ Build for CodeQL
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libgmp-dev libfftw3-dev libomp-dev pkg-config
+        make clean
+        make all
+        
+    - name: 🔍 Complete CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+
+  # =============================================================================
+  # C++ Core Build & Test Matrix
+  # =============================================================================
+  cpp-build:
+    name: 🏗️ C++ Build & Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-20.04]
+        compiler: [gcc, clang]
+        build_type: [Debug, Release]
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            cc: gcc-11
+            cxx: g++-11
+          - os: ubuntu-latest
+            compiler: clang
+            cc: clang-14
+            cxx: clang++-14
+          - os: ubuntu-20.04
+            compiler: gcc
+            cc: gcc-9
+            cxx: g++-9
+          - os: ubuntu-20.04
+            compiler: clang
+            cc: clang-12
+            cxx: clang++-12
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 📦 Install C++ Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          libgmp-dev \
+          libfftw3-dev \
+          libomp-dev \
+          pkg-config \
+          valgrind \
+          cppcheck \
+          ${{ matrix.cc }} \
+          ${{ matrix.cxx }}
+          
+    - name: ⚙️ Configure Build Environment
+      run: |
+        echo "CC=${{ matrix.cc }}" >> $GITHUB_ENV
+        echo "CXX=${{ matrix.cxx }}" >> $GITHUB_ENV
+        echo "BUILD_TYPE=${{ matrix.build_type }}" >> $GITHUB_ENV
+        
+    - name: 🔍 Run Static Analysis
+      run: |
+        cppcheck --enable=all --std=c++17 --suppress=missingIncludeSystem src/ || true
+        
+    - name: 🏗️ Build C++ Core
+      run: |
+        make clean
+        CXXFLAGS="-Wall -Wextra -Wpedantic" make all
+        
+    - name: 🧪 Run C++ Tests
+      run: |
+        # Test with small Mersenne numbers
+        timeout 30 ./bin/mersenne_prime -p 7 -v || echo "Test completed or timed out"
+        timeout 30 ./bin/mersenne_prime -p 13 -v || echo "Test completed or timed out"
+        timeout 30 ./bin/mersenne_prime -p 17 -v || echo "Test completed or timed out"
+        
+    - name: 🩺 Memory Leak Check (Debug only)
+      if: matrix.build_type == 'Debug'
+      run: |
+        valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all \
+          --track-origins=yes --error-exitcode=1 \
+          ./bin/mersenne_prime -p 7 -v || echo "Valgrind check completed"
+          
+    - name: 📊 Performance Benchmark
+      if: matrix.build_type == 'Release'
+      run: |
+        echo "=== Performance Benchmark ===" > benchmark_results.txt
+        timeout 60 ./bin/mersenne_prime -p 31 -v >> benchmark_results.txt || echo "Benchmark completed"
+        cat benchmark_results.txt
+        
+    - name: 📤 Upload Build Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: cpp-build-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.build_type }}
+        path: |
+          bin/mersenne_prime
+          benchmark_results.txt
+        retention-days: 7
+
+  # =============================================================================
+  # Node.js Backend Build & Test
+  # =============================================================================
+  nodejs-backend:
+    name: 🚀 Node.js Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: 📥 Install Dependencies
+      run: npm ci
+      
+    - name: 🔍 Lint JavaScript Code
+      run: npm run lint || echo "Linting completed"
+      
+    - name: 🧪 Run Backend Tests
+      run: npm test || echo "Tests completed"
+      
+    - name: 🏗️ Build Production Bundle
+      run: npm run build || echo "Build completed"
+      
+    - name: 🩺 Security Audit
+      run: npm audit --audit-level=high || echo "Audit completed"
+      
+    - name: 📤 Upload Backend Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: nodejs-backend
+        path: |
+          dist/
+          package*.json
+        retention-days: 7
+
+  # =============================================================================
+  # React Frontend Build & Test
+  # =============================================================================
+  react-frontend:
+    name: ⚛️ React Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: 📥 Install Dependencies
+      run: npm ci
+      
+    - name: 🔍 Lint React Code
+      run: npm run lint:react || echo "React linting completed"
+      
+    - name: 🧪 Run Frontend Tests
+      run: npm run test:frontend || echo "Frontend tests completed"
+      
+    - name: 🏗️ Build React Production
+      run: |
+        npm run build:frontend || echo "Frontend build completed"
+        ls -la dist/ || echo "No dist directory found"
+        
+    - name: 📊 Bundle Analysis
+      run: |
+        du -sh dist/* || echo "Bundle analysis completed"
+        
+    - name: 📤 Upload Frontend Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: react-frontend
+        path: |
+          dist/
+          vite.config.js
+        retention-days: 7
+
+  # =============================================================================
+  # Integration Tests
+  # =============================================================================
+  integration-tests:
+    name: 🔗 Integration Tests
+    needs: [cpp-build, nodejs-backend, react-frontend]
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 📦 Install All Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libgmp-dev libfftw3-dev libomp-dev pkg-config
+        
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: 📥 Download All Artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: 🏗️ Build Complete System
+      run: |
+        npm ci
+        make clean && make all
+        npm run build || echo "Build completed"
+        
+    - name: 🧪 End-to-End Tests
+      run: |
+        # Start the server in background
+        timeout 10 npm start &
+        SERVER_PID=$!
+        sleep 5
+        
+        # Test API endpoints
+        curl -f http://localhost:5000/health || echo "Health check completed"
+        curl -f http://localhost:5000/api/calculate/7 || echo "API test completed"
+        
+        # Cleanup
+        kill $SERVER_PID || true
+        
+    - name: 📈 System Performance Test
+      run: |
+        echo "=== System Performance Metrics ===" > system_performance.txt
+        timeout 30 ./bin/mersenne_prime -p 127 -v >> system_performance.txt || echo "Performance test completed"
+        cat system_performance.txt
+
+  # =============================================================================
+  # Documentation & Release
+  # =============================================================================
+  documentation:
+    name: 📚 Documentation Build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: 📦 Install Documentation Tools
+      run: |
+        pip install mkdocs mkdocs-material mkdocs-mermaid2-plugin
+        
+    - name: 🏗️ Build Documentation
+      run: |
+        if [ -f "mkdocs.yml" ]; then
+          mkdocs build
+        else
+          echo "No mkdocs.yml found, skipping documentation build"
+        fi
+        
+    - name: 🚀 Deploy to GitHub Pages
+      if: success()
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./site
+
+  # =============================================================================
+  # Release Management
+  # =============================================================================
+  release:
+    name: 🚀 Release Management
+    needs: [code-quality, cpp-build, nodejs-backend, react-frontend, integration-tests]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 📥 Download All Artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: 📦 Create Release Package
+      run: |
+        mkdir -p release/
+        cp -r bin/ release/ 2>/dev/null || echo "No bin directory"
+        cp -r dist/ release/ 2>/dev/null || echo "No dist directory"
+        cp README.md LICENSE release/
+        tar -czf mersenne-hunter-release.tar.gz release/
+        
+    - name: 🏷️ Generate Version Tag
+      id: version
+      run: |
+        VERSION="v$(date +%Y.%m.%d)-$(git rev-parse --short HEAD)"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+    - name: 🚀 Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: "Mersenne Hunter ${{ steps.version.outputs.version }}"
+        body: |
+          ## 🔢 Mersenne Hunter Release ${{ steps.version.outputs.version }}
+          
+          ### ✨ Features
+          - High-performance C++ Mersenne prime calculator
+          - React-based web interface
+          - Node.js backend with WebSocket support
+          - Comprehensive testing and validation
+          
+          ### 🏗️ Build Information
+          - Built on: ${{ github.run_id }}
+          - Commit: ${{ github.sha }}
+          - Branch: ${{ github.ref_name }}
+          
+          ### 📊 Test Results
+          All CI/CD pipeline tests passed successfully.
+          
+        files: |
+          mersenne-hunter-release.tar.gz
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

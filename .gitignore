@@ -1,0 +1,300 @@
+# =============================================================================
+# Mersenne Hunter - Comprehensive .gitignore
+# =============================================================================
+
+# Build Artifacts & Binaries
+# ---------------------------
+# C++ compiled objects and executables
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.dylib
+*.so
+*.dll
+*.a
+*.lib
+bin/
+obj/
+build/
+Build/
+debug/
+Debug/
+release/
+Release/
+
+# Makefile generated files
+*.d
+*.dep
+.deps/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# Autotools
+autom4te.cache/
+config.guess
+config.sub
+config.log
+config.status
+configure
+Makefile.in
+.deps/
+.libs/
+
+# Node.js & NPM
+# -------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output/
+
+# Grunt intermediate storage
+.grunt/
+
+# Bower dependency directory
+bower_components/
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release/
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# React/Vite Build Artifacts
+# --------------------------
+dist/
+build/
+.vite/
+.rollup/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+# ----
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+application.log
+results.ndjson
+test_output.log
+deployment-run.log
+
+# IDE & Editor Files
+# ------------------
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+# JetBrains IDEs
+.idea/
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
+
+# macOS
+# -----
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+# -------
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+# -----
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Development Tools
+# -----------------
+# GDB
+.gdb_history
+gmon.out
+core
+core.*
+
+# Valgrind
+*.memcheck
+*.cachegrind
+*.callgrind
+*.helgrind
+*.drd
+*.massif
+
+# gcov
+*.gcda
+*.gcno
+*.gcov
+
+# Performance profiling
+perf.data*
+*.prof
+
+# Static analysis
+cppcheck-results.xml
+*.sarif
+
+# Package managers
+# ----------------
+# Conan
+conanfile.txt.user
+conan.lock
+conanbuild.txt
+conanrun.txt
+conandata.yml
+
+# vcpkg
+vcpkg_installed/
+
+# Project Specific
+# ----------------
+# Replit files
+.replit
+replit.nix
+
+# Temporary test files
+simulate_mersenne_tests.js
+
+# Large computation results
+*.big
+*.huge
+*.computation
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Certificate files
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Archive files (unless specifically needed)
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Generated documentation
+docs/build/
+docs/_build/
+site/

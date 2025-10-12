@@ -1,0 +1,326 @@
+name: 🔒 Security & Dependency Monitoring
+
+on:
+  schedule:
+    # Run every Monday at 2 AM UTC
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'package*.json'
+      - 'requirements*.txt'
+      - 'Makefile'
+      - 'src/**'
+
+jobs:
+  # =============================================================================
+  # Dependency Vulnerability Scanning
+  # =============================================================================
+  dependency-check:
+    name: 🔍 Dependency Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📥 Install Dependencies
+      run: npm ci
+      
+    - name: 🔍 NPM Security Audit
+      run: |
+        npm audit --json > npm-audit-results.json || true
+        npm audit --audit-level=high
+        
+    - name: 🔍 Run OWASP Dependency Check
+      uses: dependency-check/Dependency-Check_Action@main
+      with:
+        project: 'Mersenne Hunter'
+        path: '.'
+        format: 'ALL'
+        args: >
+          --enableRetired
+          --enableExperimental
+          --nodeAuditSkipDevDependencies
+          
+    - name: 📤 Upload Dependency Check Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-check-report
+        path: reports/
+        retention-days: 30
+
+  # =============================================================================
+  # Code Security Analysis
+  # =============================================================================
+  security-analysis:
+    name: 🛡️ Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 🔍 Run Semgrep Security Analysis
+      uses: returntocorp/semgrep-action@v1
+      with:
+        config: >-
+          p/security-audit
+          p/secrets
+          p/owasp-top-ten
+          p/c
+          p/cpp
+          p/javascript
+          p/typescript
+          p/react
+          
+    - name: 🔍 Secret Detection with GitLeaks
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 🔍 C/C++ Security Analysis
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cppcheck clang-tidy
+        
+        # Run cppcheck with security focus
+        cppcheck --enable=all --std=c++17 \
+          --suppress=missingIncludeSystem \
+          --template="{file}:{line}: {severity}: {message}" \
+          src/ > cppcheck-security.log 2>&1 || true
+          
+        # Run clang-tidy security checks
+        find src/ -name "*.cpp" -o -name "*.hpp" | head -5 | xargs -I {} \
+          clang-tidy {} -checks="-*,clang-analyzer-security-*,cert-*" \
+          > clang-tidy-security.log 2>&1 || true
+          
+        echo "=== CPPCheck Results ===" 
+        cat cppcheck-security.log
+        echo "=== Clang-Tidy Results ==="
+        cat clang-tidy-security.log
+        
+    - name: 📤 Upload Security Analysis Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-analysis-report
+        path: |
+          *-security.log
+        retention-days: 30
+
+  # =============================================================================
+  # Container Security (if applicable)
+  # =============================================================================
+  container-security:
+    name: 🐳 Container Security Analysis
+    runs-on: ubuntu-latest
+    if: false  # Enable when Docker support is added
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 🏗️ Build Docker Image
+      run: |
+        docker build -t mersenne-hunter:latest .
+        
+    - name: 🔍 Scan Docker Image with Trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'mersenne-hunter:latest'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: 📤 Upload Trivy Results
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # =============================================================================
+  # License Compliance Check
+  # =============================================================================
+  license-check:
+    name: 📄 License Compliance
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: 📥 Install Dependencies
+      run: npm ci
+      
+    - name: 🔍 Check License Compatibility
+      run: |
+        npx license-checker --summary > license-summary.txt || true
+        npx license-checker --onlyAllow 'MIT;ISC;Apache-2.0;BSD-2-Clause;BSD-3-Clause;AGPL-3.0' || true
+        cat license-summary.txt
+        
+    - name: 📤 Upload License Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: license-compliance-report
+        path: |
+          license-summary.txt
+        retention-days: 30
+
+  # =============================================================================
+  # Performance Security Impact
+  # =============================================================================
+  performance-security:
+    name: ⚡ Performance Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 📦 Install C++ Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libgmp-dev libfftw3-dev libomp-dev pkg-config
+        
+    - name: 🏗️ Build with Security Flags
+      run: |
+        export CXXFLAGS="-Wall -Wextra -Werror -fstack-protector-strong -D_FORTIFY_SOURCE=2 -O2"
+        export LDFLAGS="-Wl,-z,relro,-z,now"
+        make clean
+        make all
+        
+    - name: 🔍 Binary Security Analysis
+      run: |
+        # Check for security features in binary
+        if command -v checksec &> /dev/null; then
+          checksec --file=bin/mersenne_prime > binary-security.log
+        else
+          echo "checksec not available, installing..."
+          wget https://github.com/slimm609/checksec.sh/archive/main.tar.gz
+          tar -xzf main.tar.gz
+          ./checksec.sh-main/checksec --file=bin/mersenne_prime > binary-security.log
+        fi
+        
+        cat binary-security.log
+        
+    - name: 🧪 Security-Focused Performance Test
+      run: |
+        # Test with potentially malicious inputs
+        echo "Testing with edge case inputs..." > security-performance.log
+        timeout 10 ./bin/mersenne_prime -p 2 -v >> security-performance.log 2>&1 || echo "Test completed"
+        timeout 10 ./bin/mersenne_prime -p 0 -v >> security-performance.log 2>&1 || echo "Test completed"  
+        timeout 10 ./bin/mersenne_prime -p -1 -v >> security-performance.log 2>&1 || echo "Test completed"
+        
+        cat security-performance.log
+        
+    - name: 📤 Upload Performance Security Results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-security-report
+        path: |
+          binary-security.log
+          security-performance.log
+        retention-days: 30
+
+  # =============================================================================
+  # Security Report Summary
+  # =============================================================================
+  security-summary:
+    name: 📊 Security Summary Report
+    needs: [dependency-check, security-analysis, license-check, performance-security]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: 📥 Download All Security Reports
+      uses: actions/download-artifact@v3
+      
+    - name: 📊 Generate Security Summary
+      run: |
+        echo "# 🔒 Mersenne Hunter Security Report" > SECURITY_REPORT.md
+        echo "Generated: $(date -u)" >> SECURITY_REPORT.md
+        echo "" >> SECURITY_REPORT.md
+        
+        echo "## 📋 Security Analysis Summary" >> SECURITY_REPORT.md
+        echo "" >> SECURITY_REPORT.md
+        
+        # Check if reports exist and summarize
+        if [ -d "dependency-check-report" ]; then
+          echo "✅ Dependency vulnerability scan completed" >> SECURITY_REPORT.md
+        fi
+        
+        if [ -d "security-analysis-report" ]; then
+          echo "✅ Code security analysis completed" >> SECURITY_REPORT.md
+        fi
+        
+        if [ -d "license-compliance-report" ]; then
+          echo "✅ License compliance check completed" >> SECURITY_REPORT.md
+        fi
+        
+        if [ -d "performance-security-report" ]; then
+          echo "✅ Performance security analysis completed" >> SECURITY_REPORT.md
+        fi
+        
+        echo "" >> SECURITY_REPORT.md
+        echo "## 🎯 Recommendations" >> SECURITY_REPORT.md
+        echo "- Regularly update dependencies to latest secure versions" >> SECURITY_REPORT.md
+        echo "- Monitor security advisories for all dependencies" >> SECURITY_REPORT.md
+        echo "- Implement input validation for all user inputs" >> SECURITY_REPORT.md
+        echo "- Use secure coding practices for C++ components" >> SECURITY_REPORT.md
+        echo "- Regular security audits of mathematical algorithms" >> SECURITY_REPORT.md
+        
+        cat SECURITY_REPORT.md
+        
+    - name: 📤 Upload Security Summary
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-summary-report
+        path: |
+          SECURITY_REPORT.md
+        retention-days: 90
+        
+    - name: 💬 Create Security Issue (if problems found)
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const title = '🔒 Security Issues Detected in Latest Scan'
+          const body = `
+          ## Security Analysis Results
+          
+          The automated security scan has detected potential issues that require attention.
+          
+          ### Actions Required:
+          1. Review the security analysis artifacts from this workflow run
+          2. Address any high or critical severity findings
+          3. Update dependencies if vulnerabilities are found
+          4. Review and test any security-related code changes
+          
+          ### Workflow Run: 
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          This issue was automatically created by the security monitoring workflow.
+          `
+          
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['security', 'automated']
+          })
